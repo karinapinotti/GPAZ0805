@@ -1,0 +1,108 @@
+      *-----------------------------------------------------------------
+       IDENTIFICATION DIVISION.
+      *-----------------------------------------------------------------
+       PROGRAM-ID.       PGMAUX01.
+      *-----------------------------------------------------------------
+      *  PROGRAMA      : PGMAUX01
+      *  OBJETIVO      : VERIFICA OS DIGITOS DO CPF
+      *-----------------------------------------------------------------
+
+      *-----------------------------------------------------------------
+       ENVIRONMENT DIVISION.
+      *-----------------------------------------------------------------
+       CONFIGURATION SECTION.
+       SPECIAL-NAMES.
+           DECIMAL-POINT IS COMMA.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+
+      *-----------------------------------------------------------------
+       DATA DIVISION.
+      *-----------------------------------------------------------------
+       FILE SECTION.
+
+      *-----------------------------------------------------------------
+       WORKING-STORAGE SECTION.
+      *-----------------------------------------------------------------
+       01  WS-AUXILIARES.
+           05 WS-NUMERO                  PIC 9(011)  VALUE ZEROES.
+           05 WS-NUMERO-R                REDEFINES WS-NUMERO.
+              10  WS-NUMERO-T            PIC 9(001)  OCCURS 11 TIMES.
+
+           05 WS-PESOS                   PIC X(020)  VALUE SPACES.
+           05 WS-PESOS-R                 REDEFINES WS-PESOS.
+              10  WS-PESOS-T             PIC 9(002)  OCCURS 10 TIMES.
+           05 WS-PESOS-CPF               PIC X(020)  VALUE
+                                        '11100908070605040302'.
+
+           05 WS-IND-N                   PIC 9(002)  VALUE ZEROES.
+           05 WS-IND-P                   PIC 9(002)  VALUE ZEROES.
+           05 WS-SOMA                    PIC 9(008)  VALUE ZEROES.
+           05 WS-QUOCI                   PIC 9(008)  VALUE ZEROES.
+           05 WS-RESTO                   PIC 9(001)  VALUE ZEROES.
+      *-----------------------------------------------------------------
+       LINKAGE SECTION.
+      *-----------------------------------------------------------------
+       01  LS-MSG-COMUNICACAO.
+           05 LS-NUMDOC                  PIC X(11).
+           05 LS-RESULT                  PIC X(01).
+      *
+      *-----------------------------------------------------------------
+       PROCEDURE DIVISION USING LS-MSG-COMUNICACAO.
+      *-----------------------------------------------------------------
+           MOVE LS-NUMDOC    TO WS-NUMERO
+           MOVE WS-PESOS-CPF TO WS-PESOS
+           MOVE 01            TO WS-IND-N
+           MOVE 02            TO WS-IND-P
+           PERFORM 100-CALC-DIGITO-1
+
+           MOVE 01            TO WS-IND-N
+           MOVE 01            TO WS-IND-P
+           PERFORM 200-CALC-DIGITO-2
+
+           IF LS-NUMDOC = WS-NUMERO
+              MOVE '0' TO LS-RESULT
+           ELSE
+              MOVE '1' TO LS-RESULT
+           END-IF
+
+           GOBACK.
+
+      *-----------------------------------------------------------------
+       100-CALC-DIGITO-1.
+      *-----------------------------------------------------------------
+           MOVE 0 TO WS-SOMA
+           PERFORM UNTIL WS-IND-N > 9
+              COMPUTE WS-SOMA = WS-SOMA +
+                               (WS-NUMERO-T (WS-IND-N) *
+                                WS-PESOS-T  (WS-IND-P))
+                   ADD 1 TO WS-IND-N
+                   ADD 1 TO WS-IND-P
+           END-PERFORM
+           DIVIDE WS-SOMA BY 11 GIVING    WS-QUOCI
+                                REMAINDER WS-RESTO
+           IF WS-RESTO EQUAL 0 OR 1
+              MOVE ZEROES TO WS-NUMERO-T (10)
+           ELSE
+              SUBTRACT WS-RESTO FROM 11 GIVING WS-NUMERO-T (10)
+           END-IF
+           .
+      *-----------------------------------------------------------------
+       200-CALC-DIGITO-2.
+      *-----------------------------------------------------------------
+           MOVE 0 TO WS-SOMA
+           PERFORM UNTIL WS-IND-N > 10
+               COMPUTE WS-SOMA = WS-SOMA +
+                                (WS-NUMERO-T (WS-IND-N) *
+                                 WS-PESOS-T  (WS-IND-P))
+                   ADD 1 TO WS-IND-N
+                            WS-IND-P
+           END-PERFORM
+           DIVIDE WS-SOMA BY 11 GIVING WS-QUOCI
+                                REMAINDER WS-RESTO
+           IF WS-RESTO EQUAL 0 OR 1
+              MOVE ZEROES TO WS-NUMERO-T (11)
+           ELSE
+              SUBTRACT WS-RESTO FROM 11 GIVING WS-NUMERO-T (11)
+           END-IF
+           .
